@@ -10,6 +10,7 @@ export enum ErrorCode {
 export enum AuthErrorCode {
   INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
   INVALID_OTP = 'INVALID_OTP',
+  INVALID_EMAIL_FORMAT = 'INVALID_EMAIL_FORMAT',
   OTP_EXPIRED = 'OTP_EXPIRED',
   SESSION_EXPIRED = 'SESSION_EXPIRED',
   TOKEN_EXPIRED = 'TOKEN_EXPIRED',
@@ -74,8 +75,10 @@ export class AuthError extends AppError {
     const defaultMessages = {
       [AuthErrorCode.INVALID_CREDENTIALS]: 'Invalid email or password',
       [AuthErrorCode.INVALID_OTP]: 'Invalid OTP provided',
+      [AuthErrorCode.INVALID_EMAIL_FORMAT]: 'Invalid email format',
       [AuthErrorCode.OTP_EXPIRED]: 'OTP has expired. Please request a new one',
-      [AuthErrorCode.SESSION_EXPIRED]: 'Session has expired. Please login again',
+      [AuthErrorCode.SESSION_EXPIRED]:
+        'Session has expired. Please login again',
       [AuthErrorCode.TOKEN_EXPIRED]: 'Token has expired',
       [AuthErrorCode.INVALID_TOKEN]: 'Invalid or malformed token',
       [AuthErrorCode.USER_BLOCKED]: 'User account has been blocked',

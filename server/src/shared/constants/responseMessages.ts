@@ -5,6 +5,10 @@ export const RESPONSE_MESSAGES = {
   DELETED: 'Resource deleted successfully',
   DATA_RETRIEVED: 'Data retrieved successfully',
   OPERATION_COMPLETED: 'Operation completed successfully',
+  LOGIN_SUCCESS: 'Login successful',
+  LOGOUT_SUCCESS: 'Logout successful',
+  REGISTER_SUCCESS: 'Registration successful',
 } as const;
 
-export type ResponseMessage = typeof RESPONSE_MESSAGES[keyof typeof RESPONSE_MESSAGES];
+export type ResponseMessage =
+  (typeof RESPONSE_MESSAGES)[keyof typeof RESPONSE_MESSAGES];

@@ -1,0 +1,11 @@
+export type Role = 'attendee' | 'organizer' | 'admin';
+
+export interface User {
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+  roles: Role[];
+  createdAt: Date;
+  updatedAt: Date;
+}

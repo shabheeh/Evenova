@@ -8,16 +8,19 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 
 import { connectDatabase } from './infrastructure/config/database';
+import indexRoutes from './presentation/routes/index.routes';
 import { httpLogger } from './presentation/middlewares/httpLogger';
 import { errorHandler } from './presentation/middlewares/errorHandler';
-import Logger from './infrastructure/config/logger';
+import { logger } from './infrastructure/config/logger';
 import { NotFoundError } from './utils/errors';
 import { ERROR_MESSAGES } from './shared/constants/errorMessages';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000;
-const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 100;
+const RATE_LIMIT_WINDOW_MS =
+  Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS =
+  Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 100;
 
 app.use(
   helmet({
@@ -80,14 +83,18 @@ app.get('/health', (_req, res) => {
     environment: process.env.NODE_ENV,
     version: process.env.npm_package_version || '1.0.0',
     memory: {
-      used: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
-      total: Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
+      used:
+        Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
+      total:
+        Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
     },
   };
 
-  Logger.info('Health check accessed', { healthCheck });
+  logger.info('Health check accessed', { healthCheck });
   res.status(200).json(healthCheck);
 });
+
+app.use('/api', indexRoutes);
 
 app.use('*catchAll', (req: Request, _res: Response, next: NextFunction) => {
   next(new NotFoundError(`Route ${req.originalUrl} not found`));
@@ -98,27 +105,30 @@ app.use(errorHandler);
 const startServer = async (): Promise<void> => {
   try {
     await connectDatabase();
-    Logger.info('Database connection established');
+    logger.info('Database connection established');
 
     const server = app.listen(PORT, () => {
-      Logger.info(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`, {
-        port: PORT,
-        environment: process.env.NODE_ENV,
-        nodeVersion: process.version,
-        timestamp: new Date().toISOString(),
-      });
+      logger.info(
+        `Server running on port ${PORT} in ${process.env.NODE_ENV} mode`,
+        {
+          port: PORT,
+          environment: process.env.NODE_ENV,
+          nodeVersion: process.version,
+          timestamp: new Date().toISOString(),
+        }
+      );
     });
 
     const gracefulShutdown = (signal: string) => {
-      Logger.info(`Received ${signal}. Starting graceful shutdown...`);
+      logger.info(`Received ${signal}. Starting graceful shutdown...`);
 
-      server.close(err => {
+      server.close((err) => {
         if (err) {
-          Logger.error('Error during server shutdown:', err);
+          logger.error('Error during server shutdown:', err);
           process.exit(1);
         }
 
-        Logger.info('Server closed successfully');
+        logger.info('Server closed successfully');
         process.exit(0);
       });
     };
@@ -126,7 +136,7 @@ const startServer = async (): Promise<void> => {
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   } catch (error) {
-    Logger.error('Failed to start server:', {
+    logger.error('Failed to start server:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -135,21 +145,33 @@ const startServer = async (): Promise<void> => {
 };
 
 process.on('uncaughtException', (error: Error) => {
-  Logger.error('Uncaught Exception - Server will exit:', {
+  logger.error('Uncaught Exception - Server will exit:', {
     error: error.message,
     stack: error.stack,
   });
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-  Logger.error('Unhandled Rejection - Server will exit:', {
-    reason: reason instanceof Error ? reason.message : reason,
-    stack: reason instanceof Error ? reason.stack : undefined,
-    promise: promise.toString(),
-  });
-  process.exit(1);
-});
+process.on(
+  'unhandledRejection',
+  (reason: unknown, promise: Promise<unknown>) => {
+    const errorMessage =
+      reason instanceof Error
+        ? reason.message
+        : typeof reason === 'string'
+          ? reason
+          : 'Unknown rejection reason';
+
+    const errorStack = reason instanceof Error ? reason.stack : undefined;
+
+    logger.error('Unhandled Rejection - Server will exit:', {
+      reason: errorMessage,
+      stack: errorStack,
+      promise: promise.toString(),
+    });
+    process.exit(1);
+  }
+);
 
 startServer();
 

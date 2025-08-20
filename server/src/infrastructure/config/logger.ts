@@ -36,6 +36,13 @@ const fileFormat = winston.format.combine(
   winston.format.json()
 );
 
+const simpleExceptionFormat = winston.format.combine(
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
+  winston.format.printf((info) => {
+    return `${info.timestamp} [${info.level.toUpperCase()}]: ${info.message}\n${info.stack || ''}`;
+  })
+);
+
 const fileRotateTransport = new DailyRotateFile({
   filename: 'logs/application-%DATE%.log',
   datePattern: 'YYYY-MM-DD',
@@ -46,6 +53,7 @@ const fileRotateTransport = new DailyRotateFile({
 
 const errorRotateTransport = new DailyRotateFile({
   filename: 'logs/error-%DATE%.log',
+
   datePattern: 'YYYY-MM-DD',
   level: 'error',
   maxSize: '20m',
@@ -53,7 +61,7 @@ const errorRotateTransport = new DailyRotateFile({
   format: fileFormat,
 });
 
-const Logger = winston.createLogger({
+export const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'warn' : 'debug',
   levels,
   transports: [
@@ -64,12 +72,15 @@ const Logger = winston.createLogger({
     errorRotateTransport,
   ],
   exceptionHandlers: [
-    new winston.transports.File({ filename: 'logs/exceptions.log' }),
+    new winston.transports.File({
+      filename: 'logs/exceptions.log',
+      format: simpleExceptionFormat,
+    }),
   ],
-
   rejectionHandlers: [
-    new winston.transports.File({ filename: 'logs/rejections.log' }),
+    new winston.transports.File({
+      filename: 'logs/rejections.log',
+      format: simpleExceptionFormat,
+    }),
   ],
 });
-
-export default Logger;

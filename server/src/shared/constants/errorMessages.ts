@@ -19,4 +19,4 @@ export const ERROR_MESSAGES = {
   FILE_TOO_LARGE: 'File size exceeds maximum limit',
 } as const;
 
-export type ErrorMessage = typeof ERROR_MESSAGES[keyof typeof ERROR_MESSAGES];
+export type ErrorMessage = (typeof ERROR_MESSAGES)[keyof typeof ERROR_MESSAGES];

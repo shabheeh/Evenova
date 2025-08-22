@@ -5,6 +5,7 @@ export interface User {
   password: string;
   name: string;
   phone: string;
+  location: string;
   roles: Role[];
   createdAt: Date;
   updatedAt: Date;

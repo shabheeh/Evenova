@@ -25,7 +25,11 @@ const UserSchema = new Schema<UserDocument>(
     },
     phone: {
       type: String,
-      required: false,
+      required: true,
+    },
+    location: {
+      type: String,
+      required: true,
     },
     roles: {
       type: [String],
@@ -35,7 +39,7 @@ const UserSchema = new Schema<UserDocument>(
   },
   {
     timestamps: true,
-  }
+  } 
 );
 
 export const UserModel = mongoose.model<UserDocument>('User', UserSchema);

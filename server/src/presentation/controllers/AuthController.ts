@@ -1,9 +1,10 @@
 import { inject, injectable } from 'inversify';
+import { Request, Response } from 'express';
 import { IAuthController } from '../interfaces/IAuthController';
 import { TYPES } from '@/infrastructure/di/types';
 import { ILoginUseCase } from '@/application/use-cases/auth/ILoginUseCase';
-import { IRegisterUseCase } from '@/application/use-cases/auth/IRegisterUseCase';
-import { Request, Response } from 'express';
+import { ISendOtpUseCase } from '@/application/use-cases/auth/ISendOtpUseCase';
+import { IVerifyOtpUseCase } from '@/application/use-cases/auth/IVerifyOtpUseCase';
 import { HTTP_STATUS } from '@/shared/constants/httpStatusCodes';
 import { RESPONSE_MESSAGES } from '@/shared/constants/responseMessages';
 
@@ -11,10 +12,38 @@ import { RESPONSE_MESSAGES } from '@/shared/constants/responseMessages';
 export class AuthController implements IAuthController {
   constructor(
     @inject(TYPES.ILoginUseCase) private loginUseCase: ILoginUseCase,
-    @inject(TYPES.IRegisterUseCase) private registerUseCase: IRegisterUseCase
+    @inject(TYPES.ISendOtpUseCase) private sendOtpUseCase: ISendOtpUseCase,
+    @inject(TYPES.IVerifyOtpUseCase) private verifyOtpUseCase: IVerifyOtpUseCase
   ) {}
 
-  login = async (req: Request, res: Response) => {
+  sendOtp = async (req: Request, res: Response): Promise<void> => {
+    await this.sendOtpUseCase.execute(req.body);
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: 'OTP sent successfully to your email',
+      data: {
+        email: req.body.email,
+      },
+    });
+  };
+
+  verifyOtp = async (req: Request, res: Response): Promise<void> => {
+    const user = await this.verifyOtpUseCase.execute(req.body);
+
+    res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      message: RESPONSE_MESSAGES.REGISTER_SUCCESS,
+      data: {
+        user,
+        requiresLogin: true,
+        message:
+          'Registration completed successfully. Please login to continue.',
+      },
+    });
+  };
+
+  login = async (req: Request, res: Response): Promise<void> => {
     const { user, accessToken, refreshToken } = await this.loginUseCase.execute(
       req.body
     );
@@ -36,20 +65,14 @@ export class AuthController implements IAuthController {
     res.status(HTTP_STATUS.OK).json({
       success: true,
       message: RESPONSE_MESSAGES.LOGIN_SUCCESS,
-      data: { user },
-    });
-  };
-  register = async (req: Request, res: Response): Promise<void> => {
-    const result = await this.registerUseCase.execute(req.body);
-
-    res.status(HTTP_STATUS.CREATED).json({
-      success: true,
-      message: RESPONSE_MESSAGES.REGISTER_SUCCESS,
-      data: result,
+      data: {
+        user,
+      },
     });
   };
 
   logout = async (_req: Request, res: Response): Promise<void> => {
+
     res.clearCookie('accessToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -65,6 +88,22 @@ export class AuthController implements IAuthController {
     res.status(HTTP_STATUS.OK).json({
       success: true,
       message: RESPONSE_MESSAGES.LOGOUT_SUCCESS,
+    });
+  };
+
+
+  resendOtp = async (req: Request, res: Response): Promise<void> => {
+    const { email } = req.body;
+
+    await this.sendOtpUseCase.execute(req.body);
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: 'OTP resent successfully to your email',
+      data: {
+        email,
+        expiresIn: 300,
+      },
     });
   };
 }

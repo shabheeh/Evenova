@@ -24,6 +24,14 @@ const registerSchema = z.object({
   role: z.enum(['attendee', 'organizer']).optional(),
 });
 
+const verifyOtpSchema = z.object({
+  email: z.string().email(),
+  otp: z
+    .string()
+    .length(6, { message: 'OTP must be 6 digits' })
+    .regex(/^[0-9]+$/, { message: 'OTP must contain only numbers' }),
+});
+
 export const validateLogin = (
   req: Request,
   _res: Response,
@@ -41,7 +49,24 @@ export const validateLogin = (
   }
 };
 
-export const validateRegister = (
+export const validateVerifyOtp = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  try {
+    verifyOtpSchema.parse(req.body);
+    next();
+  } catch (err) {
+    if (err instanceof ZodError) {
+      const message = err.issues?.[0]?.message ?? 'Invalid input';
+      throw new BadRequestError(message);
+    }
+    throw err;
+  }
+};
+
+export const validateSendOtp = (
   req: Request,
   _res: Response,
   next: NextFunction

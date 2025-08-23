@@ -1,8 +1,12 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes';
+import { authRoutes } from './auth.routes';
+import { eventRoutes } from './event.routes';
+import { paymentRoutes } from './payment.routes';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
+router.use('/events', eventRoutes);
+router.use('/payments', paymentRoutes);
 
 export default router;

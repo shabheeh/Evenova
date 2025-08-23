@@ -1,7 +1,11 @@
 import { injectable } from 'inversify';
 import nodemailer from 'nodemailer';
-import { IEmailService, EmailOptions } from '@/application/interfaces/IEmailService';
+import {
+  IEmailService,
+  EmailOptions,
+} from '@/application/interfaces/IEmailService';
 import { logger } from '@/infrastructure/config/logger';
+import { TicketDocument } from '../database/models/Ticket.model';
 
 @injectable()
 export class EmailService implements IEmailService {
@@ -47,11 +51,33 @@ export class EmailService implements IEmailService {
         from: `"Evenova" <${process.env.SMTP_USER}>`,
         ...options,
       });
-      logger.info('Email sent successfully', { to: options.to, subject: options.subject });
+      logger.info('Email sent successfully', {
+        to: options.to,
+        subject: options.subject,
+      });
     } catch (error) {
       logger.error('Failed to send email', { error, to: options.to });
       throw new Error('Failed to send email');
     }
+  }
+
+  async sendTicketsEmail(
+    email: string,
+    tickets: TicketDocument[],
+  ): Promise<void> {
+    const mailOptions = {
+      from: process.env.FROM_EMAIL,
+      to: email,
+      subject: 'Your Event Tickets',
+      html: this.generateTicketEmailHTML(tickets),
+      attachments: tickets.map((ticket) => ({
+        filename: `ticket-${ticket.id}.png`,
+        path: `uploads/tickets/ticket-${ticket.id}.png`,
+        cid: ticket.id,
+      })),
+    };
+
+    await this.transporter.sendMail(mailOptions);
   }
 
   private getOtpEmailTemplate(otp: string, name: string): string {
@@ -123,6 +149,37 @@ export class EmailService implements IEmailService {
               <p>&copy; 2025 Evenova All rights reserved.</p>
             </div>
           </div>
+        </body>
+      </html>
+    `;
+  }
+
+  private generateTicketEmailHTML(tickets: TicketDocument[]): string {
+    return `
+      <html>
+        <body>
+          <h2>Your Event Tickets</h2>
+          <p>Thank you for your purchase! Please find your tickets attached.</p>
+          
+          <h3>Ticket Details:</h3>
+          <ul>
+            ${tickets
+              .map(
+                (ticket) => `
+              <li>
+                <strong>${ticket.name}</strong> - $${ticket.price}
+                <br>Ticket ID: ${ticket.id}
+                <br><img src="cid:${ticket.id}" alt="QR Code" width="150">
+              </li>
+            `
+              )
+              .join('')}
+          </ul>
+          
+          <p>Please bring these tickets (either printed or on your mobile device) to the event.</p>
+          <p>The QR codes will be scanned for entry.</p>
+          
+          <p>Thank you and enjoy the event!</p>
         </body>
       </html>
     `;

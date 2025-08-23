@@ -14,7 +14,7 @@ export class BaseRepository<T extends Document> implements IBaseRepository<T> {
 
   async findMany(
     filter: FilterQuery<T>,
-    limit?: number,
+    limit?: number, 
     skip?: number
   ): Promise<T[]> {
     let query = this.model.find(filter);
@@ -40,4 +40,7 @@ export class BaseRepository<T extends Document> implements IBaseRepository<T> {
     const count = await this.model.countDocuments(filter).exec();
     return count > 0;
   }
+  // async count(filter: FilterQuery<T>): Promise<number> {
+  //   return await this.model.countDocuments(filter).exec();
+  // }
 }

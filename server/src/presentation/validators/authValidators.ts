@@ -4,7 +4,7 @@ import { z, ZodError } from 'zod';
 
 const loginSchema = z.object({
   email: z.email({ message: 'Please provide a valid email address' }),
-  password: z.string().min(8, { message: 'Invalid password' }),
+  password: z.string({ message: 'Password is required' }),
 });
 
 const registerSchema = z.object({
@@ -25,7 +25,7 @@ const registerSchema = z.object({
 });
 
 const verifyOtpSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   otp: z
     .string()
     .length(6, { message: 'OTP must be 6 digits' })

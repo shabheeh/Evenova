@@ -7,4 +7,5 @@ export interface IBaseRepository<T extends Document> {
   create(data: Partial<T>): Promise<T>;
   update(id: string, updates: UpdateQuery<T>): Promise<T | null>;
   exists(filter: FilterQuery<T>): Promise<boolean>;
+  // count(filter: FilterQuery<T>): Promise<number>;
 }

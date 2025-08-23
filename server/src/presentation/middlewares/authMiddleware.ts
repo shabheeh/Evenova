@@ -4,12 +4,13 @@ import { IUserRepository } from '../../domain/repositories/IUserRepository';
 import { AuthError, AuthErrorCode } from '@/utils/errors';
 import { container } from '@/infrastructure/di/inversify.config';
 import { TYPES } from '@/infrastructure/di/types';
+import { Role } from '@/domain/entities/User';
 
 export interface AuthRequest extends Request {
   user?: {
     id: string;
     email: string;
-    roles: string[];
+    roles: Role[];
   };
 }
 

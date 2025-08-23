@@ -6,6 +6,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 
 import { connectDatabase } from './infrastructure/config/database';
 import indexRoutes from './presentation/routes/index.routes';
@@ -73,6 +74,7 @@ app.use(
 );
 
 app.use(compression());
+app.use(cookieParser());
 app.use(httpLogger);
 
 app.get('/health', (_req, res) => {
